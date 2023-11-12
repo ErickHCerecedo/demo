@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Juego de Paco</title>
+<style>
+    body, html {
+        height: 100%;
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #f0f0f0;
+    }
+    #gameContainer {
+        width: 600px;
+        height: 200px;
+        position: relative;
+        background-color: #e4e4e4;
+        overflow: hidden;
+    }
+    #paco {
+        width: 50px;
+        height: 50px;
+        position: absolute;
+        bottom: 0;
+        background-color: blue;
+    }
+    .chocolateBar {
+        width: 20px;
+        height: 50px;
+        position: absolute;
+        bottom: 0;
+        background-color: brown;
+    }
+</style>
+</head>
+<body>
+<div id="gameContainer">
+    <div id="paco"></div>
+</div>
+<script>
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const paco = document.getElementById('paco');
+        const gameContainer = document.getElementById('gameContainer');
+        let isJumping = false;
+        let gravity = 0.9;
+        let gameSpeed = 3;
+        let chocolateBarInterval;
+    
+        function control(e) {
+            if (e.keyCode === 32) { // Tecla espacio
+                if (!isJumping) {
+                    isJumping = true;
+                    jump();
+                }
+            }
+        }
+    
+        function jump() {
+            let count = 0;
+            let jumpInterval = setInterval(function () {
+                if (count === 15) {
+                    clearInterval(jumpInterval);
+                    let fallInterval = setInterval(function () {
+                        if (count === 0) {
+                            clearInterval(fallInterval);
+                            isJumping = false;
+                        }
+                        paco.style.bottom = count * 3 + 'px';
+                        count -= 1;
+                    }, 20);
+                }
+                paco.style.bottom = count * 3 + 'px';
+                count += 1;
+            }, 20);
+        }
+    
+        function generateChocolateBar() {
+            let randomTime = Math.random() * 4000;
+            let chocolateBar = document.createElement('div');
+            chocolateBar.classList.add('chocolateBar');
+            gameContainer.appendChild(chocolateBar);
+            moveChocolateBar(chocolateBar);
+    
+            chocolateBarInterval = setTimeout(generateChocolateBar, randomTime);
+        }
+    
+        function moveChocolateBar(bar) {
+            let moveInterval = setInterval(function () {
+                let barPosition = parseInt(window.getComputedStyle(bar).getPropertyValue('right'));
+                // Detectar colisión
+                if (barPosition > 350 && barPosition < 400 && paco.offsetTop >= 130) {
+                    alert("¡Juego terminado!");
+                    clearInterval(moveInterval);
+                    clearTimeout(chocolateBarInterval);
+                    document.removeEventListener('keyup', control);
+                    // Reiniciar el juego
+                }
+                bar.style.right = barPosition + gameSpeed + 'px';
+            }, 20);
+        }
+    
+        document.addEventListener('keyup', control);
+        generateChocolateBar();
+    });
+    
+
+</script>
+</body>
+</html>

@@ -11,21 +11,25 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        background-color: #f0f0f0;
+        background-color: #e4e4e4;
     }
     #gameContainer {
         width: 600px;
         height: 200px;
         position: relative;
-        background-color: #e4e4e4;
+        background-color: #fff;
         overflow: hidden;
     }
     #paco {
-        width: 50px;
-        height: 50px;
+        border: 1px solid red;
         position: absolute;
         bottom: 0;
         background-color: blue;
+    }
+    #sprite {
+        position: absolute;
+        bottom: -10px;
+        left: -30px;
     }
     .chocolateBar {
         width: 20px;
@@ -34,22 +38,87 @@
         bottom: 0;
         background-color: brown;
     }
+    #start-btn {
+        position: fixed;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 10px 20px;
+        background-color: aqua;
+        cursor: pointer;
+        border-radius: 15px;
+        color: black;
+        font-family: Arial, Helvetica, sans-serif;
+        z-index: 1;
+    }
 </style>
 </head>
 <body>
+<div id="start-btn">Start</div>
 <div id="gameContainer">
-    <div id="paco"></div>
+    <div id="paco">
+        <img
+            src="./assets/paco/walk_1.png" id="sprite"
+            width="130" contain
+        >
+    </div>
 </div>
 <script>
 
     document.addEventListener('DOMContentLoaded', () => {
         const paco = document.getElementById('paco');
         const gameContainer = document.getElementById('gameContainer');
+        const sprite = document.getElementById('sprite');
+        const chocolateHeight = 50;
+        const music = new Audio('./assets/music/bensound-lofinerdbassbuzzer.mp3');
+        music.volume = 0.5;
+        music.loop = true;
         let isJumping = false;
-        let gravity = 0.9;
-        let gameSpeed = 3;
+        let gravity = 0.6;
+        let gameSpeed = 5;
+        let elapsedTime = 0;
         let chocolateBarInterval;
     
+        function startGame() {
+            document.addEventListener('keydown', control);
+            generateChocolateBar();
+            setInterval(() => {
+                gameSpeed += .5;
+                elapsedTime++;
+            }, 1000);
+            startAnimation()
+            music.play();
+        }
+
+        function restartGame() {
+            gameContainer.innerHTML = ''
+            gameContainer.appendChild(paco);
+            document.addEventListener('keydown', control);
+            generateChocolateBar();
+            gameSpeed = 5;
+            elapsedTime = 1;
+            music.play();
+        }
+
+        function startAnimation() {
+            let tick = 0
+            setInterval(() => {
+                tick++
+            }, 500)
+            setInterval(() => {
+                if(isJumping) {
+                    sprite.src = './assets/paco/jump.png';
+                    return;
+                }
+
+                if(tick % 2) {
+                    sprite.src = './assets/paco/walk_1.png';
+                }
+                else {
+                    sprite.src = './assets/paco/walk_2.png';
+                }
+            }, 100)
+        }
+
         function control(e) {
             if (e.keyCode === 32) { // Tecla espacio
                 if (!isJumping) {
@@ -60,29 +129,44 @@
         }
     
         function jump() {
-            let count = 0;
+            const maxHeight = chocolateHeight * 2;
+            const verticalVelocity = 10;
+            let height = 0;
+            let direction = 1;
+
             let jumpInterval = setInterval(function () {
-                if (count === 15) {
+                let pacoPosition = parseInt(window.getComputedStyle(paco).getPropertyValue('bottom'));
+                if (pacoPosition >= maxHeight && direction === 1) {
                     clearInterval(jumpInterval);
-                    let fallInterval = setInterval(function () {
-                        if (count === 0) {
-                            clearInterval(fallInterval);
-                            isJumping = false;
-                        }
-                        paco.style.bottom = count * 3 + 'px';
-                        count -= 1;
-                    }, 20);
+
+                    setTimeout(() => {
+                        let fallInterval = setInterval(function () {
+                            direction = -1;
+                            if (height <= 0) {
+                                clearInterval(fallInterval);
+                                isJumping = false;
+                                height = 0;
+                                paco.style.bottom = height + 'px';
+                                return;
+                            }
+                            height += verticalVelocity * gravity * direction;
+                            paco.style.bottom = height + 'px';
+                        }, 20);
+                    }, 100);   
                 }
-                paco.style.bottom = count * 3 + 'px';
-                count += 1;
+                else {
+                    height += verticalVelocity * gravity * direction;
+                    paco.style.bottom = height + 'px';
+                }
             }, 20);
         }
     
         function generateChocolateBar() {
-            let randomTime = Math.random() * 4000;
+            let randomTime = Math.random() * 1000 + 800;
             let chocolateBar = document.createElement('div');
             chocolateBar.classList.add('chocolateBar');
             gameContainer.appendChild(chocolateBar);
+            chocolateBar.style.right = 0;
             moveChocolateBar(chocolateBar);
     
             chocolateBarInterval = setTimeout(generateChocolateBar, randomTime);
@@ -92,19 +176,25 @@
             let moveInterval = setInterval(function () {
                 let barPosition = parseInt(window.getComputedStyle(bar).getPropertyValue('right'));
                 // Detectar colisión
-                if (barPosition > 350 && barPosition < 400 && paco.offsetTop >= 130) {
+                if (barPosition > 530 && barPosition < 580 && paco.offsetTop >= 150) {
+                    music.pause();
+                    music.currentTime = 0;
                     alert("¡Juego terminado!");
                     clearInterval(moveInterval);
                     clearTimeout(chocolateBarInterval);
                     document.removeEventListener('keyup', control);
                     // Reiniciar el juego
+                    restartGame();
                 }
                 bar.style.right = barPosition + gameSpeed + 'px';
             }, 20);
         }
     
-        document.addEventListener('keyup', control);
-        generateChocolateBar();
+        document.getElementById('start-btn')
+            .addEventListener('click', () => {
+                startGame();
+                document.getElementById('start-btn').style.display = 'none';
+            });
     });
     
 

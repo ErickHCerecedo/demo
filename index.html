@@ -81,8 +81,15 @@
         let elapsedTime = 0;
         let chocolateBarInterval;
     
+        function scale() {
+            let scale = window.innerWidth / 650;
+            gameContainer.style.transform = `scale(${scale})`;
+        }
+        scale();
+
         function startGame() {
             document.addEventListener('keydown', control);
+            document.addEventListener('click', handleClick);
             generateChocolateBar();
             setInterval(() => {
                 gameSpeed += .5;
@@ -96,6 +103,7 @@
             gameContainer.innerHTML = ''
             gameContainer.appendChild(paco);
             document.addEventListener('keydown', control);
+            document.addEventListener('click', handleClick);
             generateChocolateBar();
             gameSpeed = 5;
             elapsedTime = 1;
@@ -120,6 +128,13 @@
                     sprite.src = './assets/paco/walk_2.png';
                 }
             }, 100)
+        }
+
+        function handleClick() {
+            if (!isJumping) {
+                isJumping = true;
+                jump();
+            }
         }
 
         function control(e) {
@@ -182,7 +197,7 @@
                 if (barPosition > 510 && barPosition < 560 && paco.offsetTop >= 140) {
                     music.pause();
                     music.currentTime = 0;
-                    alert("¡Juego terminado!");
+                    alert("¡Juego terminado! Puntaje: " + elapsedTime + " segundos");
                     clearInterval(moveInterval);
                     clearTimeout(chocolateBarInterval);
                     document.removeEventListener('keyup', control);

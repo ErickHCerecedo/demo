@@ -30,7 +30,7 @@
         left: 10%;
         top: 50%;
         transform: translateY(-50%);
-        filter: blur(.7px);
+        filter: blur(1px);
     }
     #paco {
         position: absolute;
@@ -42,14 +42,24 @@
         left: 0;
     }
     .chocolateBar {
-        width: 40px;
-        height: 60px;
+        width: 30px;
+        height: 45px;
         position: absolute;
         bottom: 0;
         background-image: url('./assets/misc/chocolate_bar.png');
         background-size: contain;
         background-repeat: no-repeat;
     }
+    /* .chocolateBar::after {
+        content: '';
+        position: absolute;
+        width: 0px;
+        height: 0px;
+        border-radius: 50%;
+        left: 50%; top: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 15px 5px rgba(255, 0, 0);
+    } */
     #start-btn {
         position: fixed;
         top: 50%; left: 50%;
@@ -227,7 +237,7 @@
             let moveInterval = setInterval(function () {
                 let barPosition = parseInt(window.getComputedStyle(bar).getPropertyValue('right'));
                 // Detectar colisión
-                if (barPosition > 523 && barPosition < 573 && paco.offsetTop >= 150) {
+                if (barPosition > 530 && barPosition < 580 && paco.offsetTop >= 157) {
                     music.pause();
                     music.currentTime = 0;
                     alert("¡Juego terminado! Puntaje: " + elapsedTime + " segundos");

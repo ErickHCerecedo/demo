@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Juego de Paco</title>
 <style>
+    * {
+        user-select: none;
+    }
+
     body, html {
         height: 100%;
         margin: 0;
@@ -20,24 +24,29 @@
         background-color: #fff;
         overflow: hidden;
     }
+    #background {
+        position: absolute;
+        width: 80%;
+        left: 10%;
+        top: 50%;
+        transform: translateY(-50%);
+        filter: blur(.7px);
+    }
     #paco {
-        border: 1px solid red;
         position: absolute;
         bottom: 0;
-        background-color: blue;
     }
     #sprite {
         position: absolute;
         bottom: -10px;
-        left: -30px;
+        left: 0;
     }
     .chocolateBar {
-        width: 50px;
-        height: 70px;
+        width: 40px;
+        height: 60px;
         position: absolute;
         bottom: 0;
-        /* background-color: brown; */
-        background-image: url('https://cdn.discordapp.com/attachments/1166683421280587806/1173190001060757614/6_sin_titulo_20231112025814.png?ex=65630d55&is=65509855&hm=11c02ec98029ef53f1bf7d2a2128498a259ebe42f2b54c49c6176d07fc35fdcc&');
+        background-image: url('./assets/misc/chocolate_bar.png');
         background-size: contain;
         background-repeat: no-repeat;
     }
@@ -58,21 +67,23 @@
 <body>
 <div id="start-btn">Start</div>
 <div id="gameContainer">
+    <img id="background" src="./assets/misc/background.jpg"/>
     <div id="paco">
         <img
             src="./assets/paco/walk_1.png" id="sprite"
-            width="130" contain
+            width="50" contain
         >
     </div>
 </div>
 <script>
 
     document.addEventListener('DOMContentLoaded', () => {
+        const background = document.getElementById('background');
         const paco = document.getElementById('paco');
         const gameContainer = document.getElementById('gameContainer');
         const sprite = document.getElementById('sprite');
         const chocolateHeight = 50;
-        const music = new Audio('./assets/music/bensound-lofinerdbassbuzzer.mp3');
+        const music = new Audio('./assets/music/soundtrack.mp3');
         music.volume = 0.5;
         music.loop = true;
         let isJumping = false;
@@ -80,12 +91,15 @@
         let gameSpeed = 5;
         let elapsedTime = 0;
         let chocolateBarInterval;
+        let verticalVelocity = 10;
+        let direction = 1;
     
         function scale() {
             let scale = window.innerWidth / 650;
             gameContainer.style.transform = `scale(${scale})`;
         }
         scale();
+        window.addEventListener('resize', scale);
 
         function startGame() {
             document.addEventListener('keydown', control);
@@ -95,12 +109,14 @@
                 gameSpeed += .5;
                 elapsedTime++;
             }, 1000);
+            setInterval(moveBackground, 20);
             startAnimation()
             music.play();
         }
 
         function restartGame() {
             gameContainer.innerHTML = ''
+            gameContainer.appendChild(background);
             gameContainer.appendChild(paco);
             document.addEventListener('keydown', control);
             document.addEventListener('click', handleClick);
@@ -108,6 +124,15 @@
             gameSpeed = 5;
             elapsedTime = 1;
             music.play();
+        }
+
+        function moveBackground() {
+            let backgroundPosition = parseInt(window.getComputedStyle(background).getPropertyValue('left'));
+            if (backgroundPosition < -450) {
+                background.style.left = 450 + 'px';
+                return;
+            }
+            background.style.left = backgroundPosition - gameSpeed / 2 + 'px';
         }
 
         function startAnimation() {
@@ -134,27 +159,35 @@
             if (!isJumping) {
                 isJumping = true;
                 jump();
+            } else {
+                forceFall();
             }
         }
-
         function control(e) {
-            if (e.keyCode === 32) { // Tecla espacio
-                if (!isJumping) {
+            if(e.keyCode === 32) {
+                if(isJumping) {
+                    forceFall();
+                }
+                else {
                     isJumping = true;
                     jump();
                 }
             }
         }
     
+        function forceFall() {
+            verticalVelocity = 50;
+            direction = -1;
+        }
         function jump() {
             const maxHeight = chocolateHeight * 2;
-            const verticalVelocity = 10;
             let height = 0;
-            let direction = 1;
+            verticalVelocity = 10;
+            direction = 1;
 
             let jumpInterval = setInterval(function () {
                 let pacoPosition = parseInt(window.getComputedStyle(paco).getPropertyValue('bottom'));
-                if (pacoPosition >= maxHeight && direction === 1) {
+                if (pacoPosition >= maxHeight || direction === -1) {
                     clearInterval(jumpInterval);
 
                     setTimeout(() => {
@@ -170,7 +203,7 @@
                             height += verticalVelocity * gravity * direction;
                             paco.style.bottom = height + 'px';
                         }, 20);
-                    }, 100);   
+                    }, 0);
                 }
                 else {
                     height += verticalVelocity * gravity * direction;
@@ -180,7 +213,7 @@
         }
     
         function generateChocolateBar() {
-            let randomTime = Math.random() * 1000 + 1000 - elapsedTime * 10;
+            let randomTime = Math.random() * 1000 + 1000 - elapsedTime * 15;
             let chocolateBar = document.createElement('div');
             chocolateBar.classList.add('chocolateBar');
             gameContainer.appendChild(chocolateBar);
@@ -194,7 +227,7 @@
             let moveInterval = setInterval(function () {
                 let barPosition = parseInt(window.getComputedStyle(bar).getPropertyValue('right'));
                 // Detectar colisión
-                if (barPosition > 510 && barPosition < 560 && paco.offsetTop >= 140) {
+                if (barPosition > 523 && barPosition < 573 && paco.offsetTop >= 150) {
                     music.pause();
                     music.currentTime = 0;
                     alert("¡Juego terminado! Puntaje: " + elapsedTime + " segundos");
@@ -204,6 +237,13 @@
                     // Reiniciar el juego
                     restartGame();
                 }
+
+                if (barPosition > 600) {
+                    clearInterval(moveInterval);
+                    bar.remove();
+                    return;
+                }
+
                 bar.style.right = barPosition + gameSpeed + 'px';
             }, 20);
         }
